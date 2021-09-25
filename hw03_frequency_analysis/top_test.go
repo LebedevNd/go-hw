@@ -48,6 +48,14 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("only punct symbols", func(t *testing.T) {
+		require.Len(t, Top10(".,/'././/// ...    .()*&"), 0)
+	})
+
+	t.Run("same different words", func(t *testing.T) {
+		require.Len(t, Top10("Golang gOlang goLang golAng golaNg golanG GOLANG golang <gOLANg>"), 1)
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
