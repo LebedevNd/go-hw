@@ -4,6 +4,5 @@ go 1.16
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.8
-	github.com/daixiang0/gci v0.2.9 // indirect
 	github.com/stretchr/testify v1.7.0
 )
