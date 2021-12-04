@@ -23,7 +23,7 @@ type (
 	}
 
 	App struct {
-		Version string `validate:"len:5|regexp:\\d+"`
+		Version string `validate:"len:5"`
 	}
 
 	Token struct {
@@ -44,13 +44,26 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			User{
+				"adafsvsasqwefascsfww",
+				"FOORK",
+				17,
+				"boommail.ru",
+				"Chief",
+				[]string{
+					"123123",
+					"qweqds",
+				},
+				json.RawMessage{},
+			},
+			errors.New("42"),
+		},
+		{
 			App{
 				"Hello world!",
 			},
-			errors.New("string with more than 5 symbols"),
+			errors.New("wrong string length"),
 		},
-		// ...
-		// Place your code here.
 	}
 
 	for i, tt := range tests {
@@ -59,7 +72,7 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			err := Validate(tt.in)
-			require.Equal(t, err.Error(), tt.expectedErr)
+			require.Equal(t, tt.expectedErr.Error(), err.Error())
 
 			_ = tt
 		})
