@@ -2,7 +2,9 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -21,7 +23,7 @@ type (
 	}
 
 	App struct {
-		Version string `validate:"len:5"`
+		Version string `validate:"len:5|regexp:\\d+"`
 	}
 
 	Token struct {
@@ -42,7 +44,10 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			App{
+				"Hello world!",
+			},
+			errors.New("string with more than 5 symbols"),
 		},
 		// ...
 		// Place your code here.
@@ -53,7 +58,9 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
+			err := Validate(tt.in)
+			require.Equal(t, err.Error(), tt.expectedErr)
+
 			_ = tt
 		})
 	}
