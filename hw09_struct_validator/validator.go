@@ -24,7 +24,7 @@ func (v ValidationErrors) Error() string {
 }
 
 func Validate(v interface{}) error {
-	var errorsPack = ValidationErrors{}
+	errorsPack := ValidationErrors{}
 
 	refValueStruct := reflect.ValueOf(v)
 	refTypeStruct := refValueStruct.Type()
@@ -49,38 +49,39 @@ func Validate(v interface{}) error {
 }
 
 func validateField(fieldName string, validator string, refValue reflect.Value) ValidationErrors {
-
 	var errs ValidationErrors
 
 	fieldTypeBase := refValue.Type().Kind().String()
 	fieldType := refValue.Type().String()
 
-	if fieldType == "string" || fieldTypeBase == "string" {
+	switch {
+	case fieldType == "string" || fieldTypeBase == "string":
 		err, validationFailed := validateStringField(fieldName, validator, refValue.String())
 		if validationFailed {
 			errs = append(errs, err)
 		}
-	} else if fieldType == "int" || fieldTypeBase == "int" {
+	case fieldType == "int" || fieldTypeBase == "int":
 		err, validationFailed := validateIntField(fieldName, validator, refValue.Int())
 		if validationFailed {
 			errs = append(errs, err)
 		}
-	} else if fieldType == "[]string" || fieldTypeBase == "[]string" {
-		stringsSlice := refValue.Interface().([]string)
-		for _, value := range stringsSlice {
+	case fieldType == "[]string" || fieldTypeBase == "[]string":
+		stringSlice := refValue.Interface().([]string)
+		for _, value := range stringSlice {
 			err, validationFailed := validateStringField(fieldName, validator, value)
 			if validationFailed {
 				errs = append(errs, err)
 			}
 		}
-	} else if fieldType == "[]int" || fieldTypeBase == "[]int" {
-		intsSlice := refValue.Interface().([]int64)
-		for _, value := range intsSlice {
+	case fieldType == "[]int" || fieldTypeBase == "[]int":
+		intSlice := refValue.Interface().([]int64)
+		for _, value := range intSlice {
 			err, validationFailed := validateIntField(fieldName, validator, value)
 			if validationFailed {
 				errs = append(errs, err)
 			}
 		}
+	default:
 	}
 
 	return errs
@@ -100,7 +101,7 @@ func validateIntField(name string, validator string, value int64) (ValidationErr
 		if err == nil && value < int64(validLen) {
 			return ValidationError{
 				name,
-				errors.New("wrong int length, must be more than " + validatorValue),
+				errors.New("wrong int length, must be more or equal to " + (validatorValue)),
 			}, true
 		}
 	}
@@ -129,7 +130,6 @@ func validateIntField(name string, validator string, value int64) (ValidationErr
 }
 
 func validateStringField(name string, validator string, value string) (ValidationError, bool) {
-
 	validationArray := strings.Split(validator, ":")
 	if len(validationArray) != 2 {
 		return ValidationError{}, false
