@@ -18,7 +18,8 @@ type ValidationErrors []ValidationError
 func (v ValidationErrors) Error() string {
 	message := ""
 	for _, validationError := range v {
-		message += validationError.Err.Error()
+		message += validationError.Field + " : " + validationError.Err.Error()
+		message += "\n"
 	}
 	return message
 }
