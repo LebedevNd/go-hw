@@ -2,10 +2,12 @@ package hw10programoptimization
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"github.com/valyala/fastjson"
 	"io"
 	"strings"
+
+	"github.com/valyala/fastjson"
 )
 
 type DomainStat map[string]int
@@ -35,6 +37,9 @@ func getUsers(r io.Reader) (result []string, err error) {
 		}
 	}
 
+	if len(result) == 0 {
+		return []string{}, errors.New("no emails found")
+	}
 	return result, err
 }
 
