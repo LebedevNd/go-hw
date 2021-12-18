@@ -1,23 +1,14 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"regexp"
 	"strings"
-)
 
-type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
-}
+	"github.com/valyala/fastjson"
+)
 
 type DomainStat map[string]int
 
@@ -29,38 +20,44 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	return countDomains(u, domain)
 }
 
-type users [100_000]User
+func getUsers(r io.Reader) (result []string, err error) {
+	scanner := bufio.NewScanner(r)
+	var sc fastjson.Scanner
+	var email string
 
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return
-	}
+	for scanner.Scan() {
+		bytes := scanner.Bytes()
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
+		sc.InitBytes(bytes)
+		for sc.Next() {
+			if sc.Value().Get("Email") != nil {
+				email = sc.Value().Get("Email").String()
+				result = append(result, email[1:len(email)-1])
+			}
 		}
-		result[i] = user
 	}
-	return
+
+	if len(result) == 0 {
+		return []string{}, errors.New("no emails found")
+	}
+	return result, err
 }
 
-func countDomains(u users, domain string) (DomainStat, error) {
+func countDomains(emails []string, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
+	var p []string
+	var userDomain string
+	for _, email := range emails {
+		p = strings.Split(email, ".")
+		if len(p) < 2 {
+			continue
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		userDomain = strings.ToLower(p[len(p)-1])
+		if userDomain == domain {
+			address := strings.ToLower(strings.Split(email, "@")[1])
+			result[address]++
 		}
 	}
 	return result, nil

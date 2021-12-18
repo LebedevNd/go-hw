@@ -1,3 +1,4 @@
+//go:build !bench
 // +build !bench
 
 package hw10programoptimization
@@ -35,5 +36,11 @@ func TestGetDomainStat(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "unknown")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("find 'ru'", func(t *testing.T) {
+		_, err := GetDomainStat(bytes.NewBufferString(""), "ru")
+		require.Error(t, err)
+		require.Equal(t, "get users error: no emails found", err.Error())
 	})
 }
