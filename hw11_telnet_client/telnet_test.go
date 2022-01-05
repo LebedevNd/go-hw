@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -61,5 +62,12 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+
+	t.Run("wrong ip", func(t *testing.T) {
+		c := NewTelnetClient("awdsasd", timeout, os.Stdin, os.Stdout)
+		s := c.Connect()
+		_ = s
+		require.Errorf(t, c.Connect(), "missing port in address")
 	})
 }
