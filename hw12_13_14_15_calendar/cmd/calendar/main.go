@@ -3,21 +3,23 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/LebedevNd/go-hw/hw12_13_14_15_calendar/internal/app"
+	"github.com/LebedevNd/go-hw/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/LebedevNd/go-hw/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/LebedevNd/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/LebedevNd/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/configs/calendar/config.json", "Path to configuration file")
 }
 
 func main() {
@@ -28,13 +30,30 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	config, err := NewConfig(configFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	storage := memorystorage.New()
+	logg := logger.New(config.Logger.LogFile, config.Logger.Level)
+
+	var storage app.Storage
+	if config.Storage.StorageType == "in-memory" {
+		storage = memorystorage.New()
+	} else {
+		storage = sqlstorage.New(
+			config.Database.Username,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Database,
+		)
+	}
+
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(*calendar, config.Server.Host, config.Server.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
